@@ -35,6 +35,39 @@ export class UrlService {
     return entry;
   }
 
+  /**
+   * Look up the original URL for a short code.
+   * Throws NotFoundError if the code doesn't exist.
+   */
+  decode(shortCode: string): UrlEntry {
+    const entry = this.repository.findByShortCode(shortCode);
+    if (!entry) {
+      throw new NotFoundError('Short URL', shortCode);
+    }
+    return entry;
+  }
+
+  /**
+   * Return every stored entry, optionally filtered by a substring on the original URL.
+   * Most recently created first.
+   */
+  list(query?: string): UrlEntry[] {
+    return this.repository.findAll(query);
+  }
+
+  /**
+   * Return stats for a short code.
+   * Throws NotFoundError if the code doesn't exist.
+   */
+  getStatistics(shortCode: string): UrlEntry {
+    const entry = this.repository.findByShortCode(shortCode);
+    if (!entry) {
+      throw new NotFoundError('Short URL', shortCode);
+    }
+    return entry;
+  }
+
+
    private generateUniqueShortCode(): string {
     // With a 44^7 ≈ 1.6e11 space, collisions are astronomically unlikely,
     // but we still defend against them so the contract is airtight.
