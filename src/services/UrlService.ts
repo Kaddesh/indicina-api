@@ -1,6 +1,6 @@
 import { IUrlRepository } from '../repositories/IUrlRepository';
 import { NotFoundError } from '../errors/NotFoundError';
-import { UrlEntry } from '../types/url.types';
+import { UrlEntry, VisitMetadata } from '../types/url.types';
 import { generateShortCode } from '../utils/shortCodeGen';
 
 /**
@@ -65,8 +65,17 @@ export class UrlService {
       throw new NotFoundError('Short URL', shortCode);
     }
     return entry;
+  }/**
+   * Record a visit and return the updated entry.
+   * Throws NotFoundError if the code doesn't exist.
+   */
+  recordVisit(shortCode: string, metadata: VisitMetadata): UrlEntry {
+    const updated = this.repository.recordVisit(shortCode, metadata);
+    if (!updated) {
+      throw new NotFoundError('Short URL', shortCode);
+    }
+    return updated;
   }
-
 
    private generateUniqueShortCode(): string {
     // With a 44^7 ≈ 1.6e11 space, collisions are astronomically unlikely,

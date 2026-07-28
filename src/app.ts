@@ -3,6 +3,7 @@ import { RedirectController } from './controllers/RedirectController';
 import { errorHandler } from './middleware/errorHandler';
 import { createRouter } from './routes';
 import { UrlService } from './services/UrlService';
+import { SHORT_CODE_ROUTE_PATTERN } from './utils/shortCodeGen';
 
 /**
  * Builds and wires the Express application.
@@ -19,8 +20,12 @@ export function createApp(urlService: UrlService): Express {
 
   app.use('/api', createRouter(urlService));
 
-  
+    // Root-level redirect: GET /:url_path  -> 302 to original URL.
+  // The regex constraint prevents matching /api/* or other reserved paths.
+  const redirectController = new RedirectController(urlService);
+  app.get(`/:url_path(${SHORT_CODE_ROUTE_PATTERN})`, redirectController.redirect);
   // Global error handler — must be registered last.
+  
   app.use(errorHandler);
 
   return app;
