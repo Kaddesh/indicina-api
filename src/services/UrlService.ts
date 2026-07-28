@@ -1,6 +1,6 @@
 import { IUrlRepository } from '../repositories/IUrlRepository';
 import { NotFoundError } from '../errors/NotFoundError';
-import { UrlEntry, VisitMetadata } from '../types/url.types';
+import { UrlEntry } from '../types/url.types';
 import { generateShortCode } from '../utils/shortCodeGen';
 
 /**
