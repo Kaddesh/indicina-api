@@ -8,7 +8,7 @@ import { generateShortCode } from '../utils/shortCodeGen';
  *
  * Encoding algorithm:
  *   - Generate a random 7-char short code from a URL-safe alphabet.
- *   - On collision (vanishingly rare with a 44^7 space), regenerate.
+ *   - On collision (vanishingly rare with a 56^7 space), regenerate.
  *   - On duplicate URL, return the existing short code (idempotency).
  *
  * Non-enumerable by construction — the counter approach was predictable.
@@ -19,10 +19,11 @@ export class UrlService {
   /**
    * Encode a long URL into a short URL entry.
    * Idempotent: encoding the same URL twice returns the same short code.
+   * Returns `{ entry, created }` so callers can distinguish new vs. existing.
    */
-  encode(originalUrl: string): UrlEntry {
+  encode(originalUrl: string): { entry: UrlEntry; created: boolean } {
     const existing = this.repository.findByOriginalUrl(originalUrl);
-    if (existing) return existing;
+    if (existing) return { entry: existing, created: false };
 
     const shortCode = this.generateUniqueShortCode();
     const entry: UrlEntry = {
@@ -32,7 +33,7 @@ export class UrlService {
       visits: 0,
     };
     this.repository.save(entry);
-    return entry;
+    return { entry, created: true };
   }
 
   /**
@@ -40,11 +41,7 @@ export class UrlService {
    * Throws NotFoundError if the code doesn't exist.
    */
   decode(shortCode: string): UrlEntry {
-    const entry = this.repository.findByShortCode(shortCode);
-    if (!entry) {
-      throw new NotFoundError('Short URL', shortCode);
-    }
-    return entry;
+    return this.findByShortCodeOrThrow(shortCode);
   }
 
   /**
@@ -60,12 +57,10 @@ export class UrlService {
    * Throws NotFoundError if the code doesn't exist.
    */
   getStatistics(shortCode: string): UrlEntry {
-    const entry = this.repository.findByShortCode(shortCode);
-    if (!entry) {
-      throw new NotFoundError('Short URL', shortCode);
-    }
-    return entry;
-  }/**
+    return this.findByShortCodeOrThrow(shortCode);
+  }
+
+  /**
    * Record a visit and return the updated entry.
    * Throws NotFoundError if the code doesn't exist.
    */
@@ -77,8 +72,20 @@ export class UrlService {
     return updated;
   }
 
-   private generateUniqueShortCode(): string {
-    // With a 44^7 ≈ 1.6e11 space, collisions are astronomically unlikely,
+  /**
+   * private helper for getting shortcode in memory
+   * Throws NotFoundError if the code doesn't exist.
+   */
+  private findByShortCodeOrThrow(shortCode: string): UrlEntry {
+    const entry = this.repository.findByShortCode(shortCode);
+    if (!entry) {
+      throw new NotFoundError('Short URL', shortCode);
+    }
+    return entry;
+  }
+
+  private generateUniqueShortCode(): string {
+    // With a 56^7 ≈ 1.7e11 space, collisions are astronomically unlikely,
     // but we still defend against them so the contract is airtight.
     let shortCode: string;
     do {
@@ -87,4 +94,3 @@ export class UrlService {
     return shortCode;
   }
 }
-
