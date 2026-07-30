@@ -16,7 +16,7 @@ export class EncodeController {
   encode = (req: Request, res: Response, next: NextFunction): void => {
     try {
       const { originalUrl } = req.body as EncodeInput;
-      const entry = this.urlService.encode(originalUrl);
+      const { entry, created } = this.urlService.encode(originalUrl);
 
       const data: EncodeResponseData = {
         shortCode: entry.shortCode,
@@ -25,10 +25,9 @@ export class EncodeController {
         createdAt: entry.createdAt.toISOString(),
       };
       const body: ApiSuccess<EncodeResponseData> = { success: true, data };
-      res.status(201).json(body);
+      res.status(created ? 201 : 200).json(body);
     } catch (err) {
       next(err);
     }
   };
 }
-
