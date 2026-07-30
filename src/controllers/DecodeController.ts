@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { UrlService } from '../services/UrlService';
 import { ApiSuccess } from '../types/api.types';
 import { DecodeResponseData } from '../types/url.types';
-import { extractShortCode } from '../utils/shortCode';
+import { assertValidShortCode, extractShortCode } from '../utils/shortCode';
 import { config } from '../config/env';
 import { DecodeQuery } from '../validators/decode.schema';
 
@@ -20,6 +20,7 @@ export class DecodeController {
       const { url, shortCode } = req.query as DecodeQuery;
       const raw = url ?? shortCode ?? '';
       const code = extractShortCode(raw);
+      assertValidShortCode(code);
       const entry = this.urlService.decode(code);
 
       const data: DecodeResponseData = {

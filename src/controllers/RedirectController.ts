@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { UrlService } from '../services/UrlService';
+import { assertValidShortCode } from '../utils/shortCode';
 
 /**
  * GET /:url_path
@@ -12,6 +13,7 @@ export class RedirectController {
   redirect = (req: Request, res: Response, next: NextFunction): void => {
     try {
       const { url_path } = req.params;
+      assertValidShortCode(url_path);
       const entry = this.urlService.recordVisit(url_path, {
         visitedAt: new Date(),
         userAgent: req.get('user-agent') ?? undefined,

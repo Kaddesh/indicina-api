@@ -1,3 +1,6 @@
+import { SHORT_CODE_PATTERN } from './shortCodeGen';
+import { ValidationError } from '../errors/ValidationError';
+
 /**
  * Normalize input to a short code.
  * Accepts either a full short URL ("http://short.est/GeAi9K") or a raw code ("GeAi9K").
@@ -20,3 +23,11 @@ export function extractShortCode(input: string): string {
   return trimmed;
 }
 
+export function assertValidShortCode(shortCode: string): void {
+  if (!SHORT_CODE_PATTERN.test(shortCode)) {
+    throw new ValidationError('shortCode must be a valid 7-character short code', {
+      path: 'shortCode',
+      message: 'shortCode must match the generated short-code format',
+    });
+  }
+}
