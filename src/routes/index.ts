@@ -11,15 +11,13 @@ import { validateQuery } from '../middleware/validateQuery';
 import { decodeQuerySchema } from '../validators/decode.schema';
 import { listQuerySchema } from '../validators/list.schema';
 
- /* Wires controllers to routes.
+/* Wires controllers to routes.
  * The router receives its dependencies (the service) via factory injection,
  * which makes it trivial to swap a fake service in tests.
  */
 export function createRouter(urlService: UrlService): Router {
   const router = Router();
   const encodeController = new EncodeController(urlService);
-  
-  router.post('/encode', validateBody(encodeSchema), encodeController.encode);
   const decodeController = new DecodeController(urlService);
   const listController = new ListController(urlService);
   const statisticController = new StatisticController(urlService);
