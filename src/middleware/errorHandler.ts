@@ -18,6 +18,22 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
+
+  // Body-parser errors (malformed JSON, oversized payloads) are plain http-errors
+// from express.json() — not AppError instances — so they must be detected here.
+  const parserError = getBodyParserError(err);
+  if (parserError) {
+    const body: ApiError = {
+      success: false,
+      error: {
+        code: parserError.code,
+        message: parserError.message,
+      },
+    };
+    res.status(parserError.statusCode).json(body);
+    return;
+  }
+
   // Validation: thrown by validate middleware
   if (err instanceof ValidationError) {
     const body: ApiError = {
@@ -71,3 +87,34 @@ export function errorHandler(
   res.status(500).json(body);
 }
 
+function getBodyParserError(
+  err: unknown,
+): { statusCode: number; code: string; message: string } | null {
+  if (!err || typeof err !== 'object') return null;
+
+  const candidate = err as { status?: unknown; statusCode?: unknown; type?: unknown };
+  const statusCode =
+    typeof candidate.status === 'number'
+      ? candidate.status
+      : typeof candidate.statusCode === 'number'
+        ? candidate.statusCode
+        : undefined;
+
+  if (candidate.type === 'entity.parse.failed' && statusCode === 400) {
+    return {
+      statusCode: 400,
+      code: 'VALIDATION_ERROR',
+      message: 'Request body contains malformed JSON',
+    };
+  }
+
+  if (candidate.type === 'entity.too.large' && statusCode === 413) {
+    return {
+      statusCode: 413,
+      code: 'PAYLOAD_TOO_LARGE',
+      message: 'Request body is too large',
+    };
+  }
+
+  return null;
+}
