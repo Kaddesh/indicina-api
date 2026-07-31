@@ -8,23 +8,38 @@ import { randomBytes } from 'crypto';
  * gives 56^7 ≈ 1.7e11 possible codes — collision-resistant for
  * any realistic in-memory app.
  *
- * Uses Node's crypto.randomBytes for cryptographic randomness.
+ * Uses Node's crypto.randomBytes with rejection sampling to avoid
+ * modulo bias.
  */
 const ALPHABET = '23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
 const ALPHABET_LEN = ALPHABET.length;
 const CODE_LENGTH = 7;
 
+// Rejection threshold: largest multiple of ALPHABET_LEN within [0, 255).
+// Values ≥ MAX_VALID are discarded to ensure uniform distribution.
+const MAX_VALID = 256 - (256 % ALPHABET_LEN); // 224
+
 export function generateShortCode(length: number = CODE_LENGTH): string {
-  // Rejection sampling would be perfect but adds complexity; a tiny modulo
-  // bias on a 56-char alphabet with 256 % 56 = 32 wasted bytes is acceptable
-  // for this use case.
-  const bytes = randomBytes(length);
   let out = '';
-  for (let i = 0; i < length; i++) {
-    out += ALPHABET[bytes[i] % ALPHABET_LEN];
+  while (out.length < length) {
+    const bytes = randomBytes(length - out.length);
+    for (const b of bytes) {
+      if (out.length >= length) break;
+      if (b < MAX_VALID) {
+        out += ALPHABET[b % ALPHABET_LEN];
+      }
+    }
   }
   return out;
 }
 
-export const SHORT_CODE_PATTERN = /^[A-Za-z0-9_-]{1,32}$/;
+/** Regex matching exactly what generateShortCode produces. */
+export const SHORT_CODE_PATTERN = /^[23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ]{7}$/;
 
+/**
+ * String pattern for Express route param constraints.
+ * Use it as: app.get('/:url_path(PATTERN_STRING)', handler)
+ * The pattern is a string because Express' path-to-regexp compiles it.
+ */
+export const SHORT_CODE_ROUTE_PATTERN =
+  '[23456789abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ]{7}';
