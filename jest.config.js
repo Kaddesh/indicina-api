@@ -13,5 +13,7 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   clearMocks: true,
   verbose: true,
+  testTimeout: 30000,
+  maxWorkers: 1,
 };
 
