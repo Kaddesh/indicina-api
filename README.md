@@ -66,6 +66,18 @@ cp .env.example .env
 
 > If you change `PORT`, update `BASE_URL` to match so generated short URLs are
 > correct.
+>
+> **Why do short URLs show `http://localhost:3000/...` and not a real domain?**
+>
+> Every short URL is built as `BASE_URL/<shortCode>`. Since this project isn't in
+> production yet, `BASE_URL` defaults to `http://localhost:3000`, so you'll see
+> e.g. `http://localhost:3000/8y4C7HW` instead of the final form like
+> `http://short.est/GeAi9K`.
+>
+> The `<shortCode>` part (e.g. `8y4C7HW`) is the actual code — identical in both
+> forms. The only difference is the host, which is fully configurable: set
+> `BASE_URL` to your public domain in `.env` when you deploy and every generated
+> short URL will use it, with no code changes.
 
 ## Start
 
